@@ -175,4 +175,4 @@ export const textContentFieldType = [
 
 export const attachmentContentFieldType = [FieldType.Attachment];
 
-export const paperSizeOption = ['A3', 'A4', 'A5', 'A6', 'B3', 'B4', 'B5', 'Label', '三联三等分纸'];
+export const paperSizeOption = ['三联三等分纸', 'A3', 'A4', 'A5', 'A6', 'B3', 'B4', 'B5', 'Label'];
