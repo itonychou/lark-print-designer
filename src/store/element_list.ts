@@ -224,6 +224,96 @@ export interface IPrintRecordElementListType {
   resetPrintRecordList: () => void;
 }
 
+// 操作历史记录（用于撤销/重做）
+export interface IOperation {
+  type: 'add' | 'delete' | 'update';
+  element: IBaseElementType;
+  sourceType: 'Base' | 'Table';
+  oldElement?: IBaseElementType; // 用于更新操作的旧值
+}
+
+// 多选功能
+export interface IMultiSelectStoreType {
+  selectedElements: IBaseElementType[];
+  addSelectedElement: (element: IBaseElementType) => void;
+  removeSelectedElement: (uuid: string) => void;
+  clearSelectedElements: () => void;
+  setSelectedElements: (elements: IBaseElementType[]) => void;
+}
+
+export const useMultiSelectStore = create<IMultiSelectStoreType>()((set) => ({
+  selectedElements: [],
+  addSelectedElement: (element: IBaseElementType) =>
+    set((state: IMultiSelectStoreType) => {
+      if (!state.selectedElements.some(el => el.uuid === element.uuid)) {
+        return {
+          selectedElements: [...state.selectedElements, element],
+        };
+      }
+      return state;
+    }),
+  removeSelectedElement: (uuid: string) =>
+    set((state: IMultiSelectStoreType) => ({
+      selectedElements: state.selectedElements.filter(el => el.uuid !== uuid),
+    })),
+  clearSelectedElements: () =>
+    set(() => ({
+      selectedElements: [],
+    })),
+  setSelectedElements: (elements: IBaseElementType[]) =>
+    set(() => ({
+      selectedElements: elements,
+    })),
+}));
+
+export interface IUndoRedoStoreType {
+  history: IOperation[];
+  historyIndex: number;
+  addOperation: (operation: IOperation) => void;
+  undo: () => void;
+  redo: () => void;
+  clearHistory: () => void;
+}
+
+export const useUndoRedoStore = create<IUndoRedoStoreType>()((set) => ({
+  history: [],
+  historyIndex: -1,
+  addOperation: (operation: IOperation) =>
+    set((state: IUndoRedoStoreType) => {
+      // 截断历史记录到当前索引
+      const newHistory = state.history.slice(0, state.historyIndex + 1);
+      newHistory.push(operation);
+      return {
+        history: newHistory,
+        historyIndex: newHistory.length - 1,
+      };
+    }),
+  undo: () =>
+    set((state: IUndoRedoStoreType) => {
+      if (state.historyIndex >= 0) {
+        const operation = state.history[state.historyIndex];
+        return {
+          historyIndex: state.historyIndex - 1,
+        };
+      }
+      return state;
+    }),
+  redo: () =>
+    set((state: IUndoRedoStoreType) => {
+      if (state.historyIndex < state.history.length - 1) {
+        return {
+          historyIndex: state.historyIndex + 1,
+        };
+      }
+      return state;
+    }),
+  clearHistory: () =>
+    set(() => ({
+      history: [],
+      historyIndex: -1,
+    })),
+}));
+
 export const usePrintRecordElementListStore =
   create<IPrintRecordElementListType>()(
     persist(

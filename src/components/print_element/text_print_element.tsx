@@ -17,7 +17,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Moveable from 'react-moveable';
 import { flushSync } from 'react-dom';
 import { radiansToDegrees } from '@/lib/utils';
-import ReactHtmlParser from 'react-html-parser';
+import parse from 'html-react-parser';
 import { getCellValueToString } from '@/api/lark';
 
 interface ITextPropsType {
@@ -133,14 +133,14 @@ export const TextPrintElement: React.FC<ITextPropsType> = (props) => {
               />
             ) : (
               <div style={{ whiteSpace: 'pre-wrap' }}>
-                {ReactHtmlParser(`<p>${content}</p>`)}
+                {parse(`<p>${content}</p>`)}
               </div>
             )}
           </>
         ) : (
           fieldId && (
             <div style={{ whiteSpace: 'pre-wrap' }}>
-              {ReactHtmlParser(`<p>${cellValue}</p>`)}
+              {parse(`<p>${cellValue}</p>`)}
             </div>
           )
         )}

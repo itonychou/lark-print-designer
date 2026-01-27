@@ -14,11 +14,22 @@ import {
   ITableRecordDataStoreType,
   useTableFieldData,
   ITableFieldDataStoreType,
+  useSelectElementInfoStore,
+  ISelectElementInfoType,
+  usePrintElementListStore,
+  IPrintElementListType,
+  usePrintRecordElementListStore,
+  IPrintRecordElementListType,
+  useUndoRedoStore,
+  IUndoRedoStoreType,
+  IOperation,
+  useMultiSelectStore,
+  IMultiSelectStoreType,
 } from './store';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { DndProvider } from 'react-dnd';
 import { useWindowSize, useScroll } from 'react-use';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from 'react-i18next';
 
@@ -76,11 +87,118 @@ export const Home = () => {
     }
   };
 
+  const { selectElementInfo, changeSelectElementInfo } = useSelectElementInfoStore(
+    (state: ISelectElementInfoType) => state,
+  );
+
+  const { deletePrintElement, addPrintElement } = usePrintElementListStore(
+    (state: IPrintElementListType) => state,
+  );
+
+  const { deletePrintRecordElement, addPrintRecordElement } = usePrintRecordElementListStore(
+    (state: IPrintRecordElementListType) => state,
+  );
+
+  const { undo, redo } = useUndoRedoStore(
+    (state: IUndoRedoStoreType) => ({ undo: state.undo, redo: state.redo }),
+  );
+
+  // 复制粘贴功能
+  const [clipboard, setClipboard] = useState<IBaseElementType | null>(null);
+
+  // 多选功能
+  const { selectedElements, addSelectedElement, removeSelectedElement, clearSelectedElements } = useMultiSelectStore(
+    (state: IMultiSelectStoreType) => state,
+  );
+
   const { t } = useTranslation();
 
   const { setTableFieldData, setFieldIds } = useTableFieldData(
     (state: ITableFieldDataStoreType) => state,
   );
+
+  // 键盘事件处理
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Delete 键删除选中元素
+      if (event.key === 'Delete' || event.key === 'Backspace') {
+        if (selectElementInfo) {
+          const { uuid, sourceType } = selectElementInfo;
+          if (sourceType === 'Base') {
+            deletePrintElement(uuid);
+          } else if (sourceType === 'Table') {
+            deletePrintRecordElement(uuid);
+          }
+          changeSelectElementInfo(null);
+        }
+      }
+
+      // Ctrl+Z 撤销操作
+      if ((event.ctrlKey || event.metaKey) && event.key === 'z') {
+        event.preventDefault();
+        undo();
+        console.log('Undo operation');
+      }
+
+      // Ctrl+Y 重做操作
+      if ((event.ctrlKey || event.metaKey) && event.key === 'y') {
+        event.preventDefault();
+        redo();
+        console.log('Redo operation');
+      }
+
+      // Ctrl+C 复制选中元素
+      if ((event.ctrlKey || event.metaKey) && event.key === 'c') {
+        event.preventDefault();
+        if (selectElementInfo) {
+          setClipboard(selectElementInfo);
+          console.log('Copied element:', selectElementInfo);
+        }
+      }
+
+      // Ctrl+V 粘贴元素
+      if ((event.ctrlKey || event.metaKey) && event.key === 'v') {
+        event.preventDefault();
+        if (clipboard) {
+          // 创建复制元素的副本，生成新的 uuid
+          const copiedElement = {
+            ...clipboard,
+            uuid: `copy-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            styles: {
+              ...clipboard.styles,
+              // 稍微偏移位置，避免重叠
+              top: clipboard.styles.top + 20,
+              left: clipboard.styles.left + 20,
+            },
+          };
+
+          // 根据元素类型添加到相应的列表
+          if (copiedElement.sourceType === 'Base') {
+            addPrintElement(copiedElement);
+          } else if (copiedElement.sourceType === 'Table') {
+            addPrintRecordElement(copiedElement);
+          }
+
+          console.log('Pasted element:', copiedElement);
+        }
+      }
+
+      // Ctrl+A 全选元素
+      if ((event.ctrlKey || event.metaKey) && event.key === 'a') {
+        event.preventDefault();
+        // 全选功能待实现
+        console.log('Select all elements');
+      }
+    };
+
+    // 添加键盘事件监听
+    window.addEventListener('keydown', handleKeyDown);
+
+    // 清理事件监听
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [selectElementInfo, deletePrintElement, deletePrintRecordElement, changeSelectElementInfo, undo, redo, clipboard, addPrintElement, addPrintRecordElement, selectedElements, addSelectedElement, removeSelectedElement, clearSelectedElements]);
 
   const baseTable = bitable.base;
 
