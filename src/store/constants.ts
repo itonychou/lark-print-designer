@@ -147,6 +147,10 @@ export const paperSizeList = {
     width: '70mm',
     height: '50mm',
   },
+  '三联三等分纸': {
+    width: '241mm',
+    height: '93.1mm',
+  },
 };
 
 export const textContentFieldType = [
@@ -171,4 +175,4 @@ export const textContentFieldType = [
 
 export const attachmentContentFieldType = [FieldType.Attachment];
 
-export const paperSizeOption = ['A3', 'A4', 'A5', 'A6', 'B3', 'B4', 'B5'];
+export const paperSizeOption = ['三联三等分纸', 'A3', 'A4', 'A5', 'A6', 'B3', 'B4', 'B5', 'Label' ];
