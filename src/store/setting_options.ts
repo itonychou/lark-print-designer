@@ -6,6 +6,6 @@ export interface IPaperSizeModalType {
 }
 
 export const usePaperSizeStore = create<IPaperSizeModalType>()((set) => ({
-  paperSize: 'A4',
+  paperSize: '标准外箱签',
   changePaperSize: (data: string) => set(() => ({ paperSize: data })),
 }));

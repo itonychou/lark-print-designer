@@ -22,6 +22,11 @@ import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import UdiFieldSelector from '@/components/udi_field_selector';
+import { IContentBinding } from '@/store/types';
 import { generateGS1DataMatrix, validateUDI, saveBarcodeToFile } from '@/lib/udiUtils';
 import {
   Select,
@@ -36,9 +41,6 @@ import { useTranslation } from 'react-i18next';
 
 export const StyleSetting: React.FC<React.PropsWithChildren> = () => {
   const { t } = useTranslation();
-  
-  // UDI下载开关状态
-  const [udiDownloadEnabled, setUdiDownloadEnabled] = useState(false);
 
   const { selectElementInfo, changeSelectElementInfo } =
     useSelectElementInfoStore((state: ISelectElementInfoType) => state);
@@ -46,6 +48,22 @@ export const StyleSetting: React.FC<React.PropsWithChildren> = () => {
   const { updatePrintElement, deletePrintElement } = usePrintElementListStore(
     (state: IPrintElementListType) => state,
   );
+
+  // UDI下载开关状态
+  const [udiDownloadEnabled, setUdiDownloadEnabled] = useState(false);
+  
+  // 内容绑定状态
+  const [bindingMode, setBindingMode] = useState<'manual' | 'table'>(
+    selectElementInfo?.contentBinding?.mode || 'table'
+  );
+  const [boundFieldId, setBoundFieldId] = useState<string>(
+    selectElementInfo?.contentBinding?.boundFieldId || ''
+  );
+  const [boundFieldName, setBoundFieldName] = useState<string>(
+    selectElementInfo?.contentBinding?.boundFieldName || ''
+  );
+  const [bindingStatus, setBindingStatus] = useState<'idle' | 'binding' | 'success' | 'error'>('idle');
+  const [previewContent, setPreviewContent] = useState<string>(selectElementInfo?.content || '');
 
   const { updatePrintRecordElement, deletePrintRecordElement } =
     usePrintRecordElementListStore(
@@ -110,6 +128,150 @@ export const StyleSetting: React.FC<React.PropsWithChildren> = () => {
             {inputList.map((item: string) => {
               switch (item) {
                 case 'content':
+                  if (selectElementInfo.sourceType === sourceElementTypes.Table)
+                    return null;
+                  // UDI 元素专用的内容绑定配置
+                  if (selectElementInfo.type === IElementType.Udi) {
+                    return (
+                      <div key={item} className="col-span-2 mb-4">
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="text-sm font-medium">Content Binding</CardTitle>
+                            <CardDescription>
+                              Bind barcode content to manual input or table field
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent>
+                            {/* 数据来源切换 */}
+                            <Tabs value={bindingMode} onValueChange={(value) => {
+                              setBindingMode(value as 'manual' | 'table');
+                            }} className="mb-4">
+                              <TabsList>
+                                <TabsTrigger value="manual">Manual Input</TabsTrigger>
+                                <TabsTrigger value="table">Table Field</TabsTrigger>
+                              </TabsList>
+                              <TabsContent value="manual">
+                                <div className="space-y-2">
+                                  <Label className="text-sm">Enter Barcode Content:</Label>
+                                  <Textarea
+                                    value={selectElementInfo.content || ''}
+                                    disabled={!selectElementInfo.isEdit}
+                                    onChange={(e) => {
+                                      const value = e.target.value;
+                                      setPreviewContent(value);
+                                      valueChange({
+                                        content: value,
+                                        styles: selectElementInfo.styles,
+                                      });
+                                    }}
+                                    placeholder="Enter GS1 formatted content (e.g., (01)12345678901234(17)231231(10)ABC123)"
+                                  />
+                                </div>
+                              </TabsContent>
+                              <TabsContent value="table">
+                                <div className="space-y-4">
+                                  {/* 字段选择 */}
+                                  <div>
+                                    <Label className="text-sm block mb-2">Select Field:</Label>
+                                    <UdiFieldSelector
+                                      value={boundFieldId}
+                                      onChange={(fieldId, fieldName) => {
+                                        setBoundFieldId(fieldId);
+                                        setBoundFieldName(fieldName);
+                                        setBindingStatus('binding');
+                                        
+                                        // 模拟绑定成功
+                                        setTimeout(() => {
+                                          setBindingStatus('success');
+                                        }, 500);
+                                      }}
+                                    />
+                                  </div>
+                                  
+                                  {/* 绑定状态 */}
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs font-medium">Binding Status:</span>
+                                    {bindingStatus === 'idle' && (
+                                      <Badge variant="outline">Idle</Badge>
+                                    )}
+                                    {bindingStatus === 'binding' && (
+                                      <Badge variant="secondary">Binding...</Badge>
+                                    )}
+                                    {bindingStatus === 'success' && (
+                                      <Badge variant="default">Success</Badge>
+                                    )}
+                                    {bindingStatus === 'error' && (
+                                      <Badge variant="destructive">Error</Badge>
+                                    )}
+                                  </div>
+                                </div>
+                              </TabsContent>
+                            </Tabs>
+                            
+                            {/* 内容预览 */}
+                            <div className="mt-4 space-y-2">
+                              <Label className="text-sm">Content Preview:</Label>
+                              <div className="rounded-md border border-gray-200 bg-gray-50 p-3">
+                                <div className="text-xs font-mono whitespace-pre-wrap">
+                                  {previewContent || 'No content'}
+                                </div>
+                              </div>
+                            </div>
+                          </CardContent>
+                          <CardFooter>
+                            {/* 应用绑定配置 */}
+                            <Button
+                              className="w-full"
+                              variant="default"
+                              onClick={() => {
+                                const bindingConfig: IContentBinding = {
+                                  mode: bindingMode,
+                                  boundFieldId: bindingMode === 'table' ? boundFieldId : undefined,
+                                  boundFieldName: bindingMode === 'table' ? boundFieldName : undefined,
+                                };
+                                
+                                // 更新元素的内容绑定配置和fieldId
+                                const updatedElement = {
+                                  ...selectElementInfo,
+                                  contentBinding: bindingConfig,
+                                  // 将fieldId设置为绑定的字段ID（表格字段绑定模式）
+                                  fieldId: bindingMode === 'table' ? boundFieldId : selectElementInfo.fieldId,
+                                };
+                                
+                                if (selectElementInfo?.sourceType === sourceElementTypes.Table) {
+                                  updatePrintRecordElement(updatedElement);
+                                } else {
+                                  updatePrintElement(updatedElement);
+                                }
+                                changeSelectElementInfo(updatedElement);
+                                
+                                setBindingStatus('success');
+                                alert('Binding configuration applied successfully!');
+                              }}
+                            >
+                              Apply Binding
+                            </Button>
+                          </CardFooter>
+                        </Card>
+                      </div>
+                    );
+                  }
+                  // 非UDI元素的content输入
+                  return (
+                    <div key={item} className="col-span-2 mb-4 flex flex-col">
+                      <Label className="mb-2 mr-4">{item}:</Label>
+                      <Textarea
+                        value={selectElementInfo[item]}
+                        disabled={!selectElementInfo.isEdit}
+                        onChange={(e) =>
+                          valueChange({
+                            [item]: e.target.value,
+                            styles: selectElementInfo.styles,
+                          })
+                        }
+                      />
+                    </div>
+                  );
                 case 'src':
                   if (selectElementInfo.sourceType === sourceElementTypes.Table)
                     return null;

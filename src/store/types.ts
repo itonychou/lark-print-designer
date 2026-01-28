@@ -15,6 +15,13 @@ interface ITableData {
   header: IHeader;
   columns: any;
 }
+// 内容绑定配置接口
+export interface IContentBinding {
+  mode: 'manual' | 'table';  // 'manual' = 手动输入, 'table' = 表格字段绑定
+  boundFieldId?: string;     // 绑定的字段ID
+  boundFieldName?: string;   // 绑定的字段名称（用于显示）
+}
+
 export interface IBaseElementType {
   type: IElementType;
   styles: React.CSSProperties;
@@ -28,6 +35,7 @@ export interface IBaseElementType {
   table?: ITableData;
   pdfFile?: { pdfData: string };
   fieldType?: number;
+  contentBinding?: IContentBinding;  // 内容绑定配置
 }
 
 export const defaultTextElement: IBaseElementType = {
@@ -117,6 +125,11 @@ export const defaultUdiElement: IBaseElementType = {
   content: '(01)12345678901234(17)231231(10)ABC123',
   rotate: 0,
   isEdit: false,
+  contentBinding: {
+    mode: 'table',  // 默认表格字段绑定
+    boundFieldId: undefined,
+    boundFieldName: undefined,
+  },
 };
 
 // 默认元素列表

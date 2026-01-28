@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { paperSizeList } from '@/store/constants';
+import { paperSizeOption } from '@/store/constants';
 import { useTranslation } from 'react-i18next';
 
 export const EditToolBar = () => {
@@ -31,7 +31,7 @@ export const EditToolBar = () => {
                 <SelectValue placeholder="Text Align" />
               </SelectTrigger>
               <SelectContent className="h-[200px]">
-                {Object.keys(paperSizeList).map((value) => {
+                {paperSizeOption.map((value) => {
                   return (
                     <SelectItem key={value} value={value}>
                       {value}

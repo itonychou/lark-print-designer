@@ -29,7 +29,7 @@ interface IUdiPropsType {
 
 export const UdiPrintElement: React.FC<IUdiPropsType> = (props) => {
   const { elementInfo } = props;
-  const { content, styles, uuid, sourceType, fieldId, rotate, fieldType } = elementInfo;
+  const { content, styles, uuid, sourceType, fieldId, rotate, fieldType, contentBinding } = elementInfo;
   const targetRef = useRef<HTMLDivElement>(null);
 
   const { selectElementInfo, changeSelectElementInfo } = useSelectElementInfoStore(
@@ -73,12 +73,52 @@ export const UdiPrintElement: React.FC<IUdiPropsType> = (props) => {
     fn();
   }, [fieldId, activeRecordId, fieldType]);
 
+  // 数据绑定逻辑
   useEffect(() => {
-    console.log('UDI useEffect triggered:', { content, cellValue, sourceType, styles });
+    console.log('UDI binding effect triggered:', { contentBinding, fieldId, cellValue });
+    
+    // 如果是表格字段绑定模式且有绑定字段
+    if (contentBinding?.mode === 'table' && contentBinding?.boundFieldId) {
+      console.log('Table field binding mode active, bound to field:', contentBinding.boundFieldId);
+      
+      // 当绑定字段变化时，从表格获取最新值
+      const fn = async () => {
+        try {
+          // 使用绑定的字段ID获取单元格值
+          const cellString = await getCellValueToString(
+            contentBinding.boundFieldId as string,
+            activeRecordId,
+            fieldType as number
+          );
+          setCellValue(cellString);
+          console.log('Fetched cell value for bound field:', cellString);
+        } catch (error) {
+          console.error('Error fetching cell value for bound field:', error);
+          setCellValue('');
+        }
+      };
+      fn();
+    }
+  }, [contentBinding, activeRecordId, fieldType]);
+
+  useEffect(() => {
+    console.log('UDI useEffect triggered:', { content, cellValue, sourceType, styles, contentBinding });
     
     // 生成条形码
-    const udiContent = sourceType !== sourceElementTypes.Table ? content : cellValue;
-    console.log('UDI content to generate:', udiContent);
+    let udiContent: string | undefined;
+    
+    // 根据绑定模式确定内容来源
+    if (contentBinding?.mode === 'table' && contentBinding?.boundFieldId) {
+      // 表格字段绑定模式 - 使用cellValue（通过fieldId关联）
+      udiContent = cellValue;
+      console.log('Using table field binding, content from cellValue:', udiContent);
+    } else {
+      // 手动输入模式 - 使用content
+      udiContent = sourceType !== sourceElementTypes.Table ? content : cellValue;
+      console.log('Using manual input, content from:', sourceType !== sourceElementTypes.Table ? 'content' : 'cellValue', udiContent);
+    }
+    
+    console.log('Final UDI content to generate:', udiContent);
     
     if (udiContent && validateUDI(udiContent)) {
       console.log('UDI validation passed');
@@ -132,7 +172,7 @@ export const UdiPrintElement: React.FC<IUdiPropsType> = (props) => {
       console.log('UDI validation failed or no content');
       setBarcodeSvg('');
     }
-  }, [content, cellValue, sourceType, styles]);
+  }, [content, cellValue, sourceType, styles, contentBinding]);
 
   const setEditingElement = () => {
     if (!settingModal) return;
