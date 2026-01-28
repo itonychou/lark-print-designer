@@ -122,6 +122,19 @@ export const Home = () => {
     const handleKeyDown = (event: KeyboardEvent) => {
       // Delete 键删除选中元素
       if (event.key === 'Delete' || event.key === 'Backspace') {
+        // 检查当前是否有输入框处于编辑状态
+        const activeElement = document.activeElement;
+        const isEditingInput = activeElement && (
+          activeElement.tagName === 'INPUT' ||
+          activeElement.tagName === 'TEXTAREA' ||
+          activeElement.getAttribute('contenteditable') === 'true'
+        );
+        
+        // 如果正在编辑输入框，不执行删除元素操作
+        if (isEditingInput) {
+          return;
+        }
+        
         if (selectElementInfo && selectElementInfo.uuid) {
           const { uuid, sourceType } = selectElementInfo;
           if (sourceType === 'Base') {
