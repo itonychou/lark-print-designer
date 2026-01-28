@@ -22,6 +22,7 @@ import {
   ImagePrintElement,
   TablePrintElement,
   PdfPrintElement,
+  UdiPrintElement,
 } from '@/components/print_element';
 import { FC, useMemo } from 'react';
 import { HorizontaRulerCanvas, VerticalRulerCanvas } from '@/pages/ruler';
@@ -196,6 +197,8 @@ export const Print: FC<IPrintProps> = (props) => {
                   );
                 case IElementType.Pdf:
                   return <PdfPrintElement key={item.uuid} elementInfo={item} />;
+                case IElementType.Udi:
+                  return <UdiPrintElement key={item.uuid} elementInfo={item} />;
               }
             })}
           {printRecordList.length > 0 &&
@@ -204,6 +207,8 @@ export const Print: FC<IPrintProps> = (props) => {
                 return <TextPrintElement key={item.uuid} elementInfo={item} />;
               } else if (item.type === IElementType.Image) {
                 return <ImagePrintElement key={item.uuid} elementInfo={item} />;
+              } else if (item.type === IElementType.Udi) {
+                return <UdiPrintElement key={item.uuid} elementInfo={item} />;
               }
             })}
         </div>

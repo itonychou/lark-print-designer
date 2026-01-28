@@ -51,6 +51,8 @@ export const tableElementInputList = [
 
 export const pdfElementInputList = ['width', 'height', 'left', 'top', 'rotate'];
 
+export const udiElementInputList = ['content', 'width', 'height', 'left', 'top', 'color', 'rotate'];
+
 export const fontSizeValue = [
   '8pt',
   '9pt',
@@ -151,6 +153,10 @@ export const paperSizeList = {
     width: '241mm',
     height: '93.1mm',
   },
+  '标准外箱签': {
+    width: '88mm',
+    height: '107.5mm',
+  },
 };
 
 export const textContentFieldType = [
@@ -175,4 +181,4 @@ export const textContentFieldType = [
 
 export const attachmentContentFieldType = [FieldType.Attachment];
 
-export const paperSizeOption = ['三联三等分纸', 'A3', 'A4', 'A5', 'A6', 'B3', 'B4', 'B5', 'Label'];
+export const paperSizeOption = ['三联三等分纸', '标准外箱签', 'A3', 'A4', 'A5', 'A6', 'B3', 'B4', 'B5', 'Label'];

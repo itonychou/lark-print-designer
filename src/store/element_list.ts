@@ -291,7 +291,6 @@ export const useUndoRedoStore = create<IUndoRedoStoreType>()((set) => ({
   undo: () =>
     set((state: IUndoRedoStoreType) => {
       if (state.historyIndex >= 0) {
-        const operation = state.history[state.historyIndex];
         return {
           historyIndex: state.historyIndex - 1,
         };

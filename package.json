@@ -23,6 +23,7 @@
     "@swc/core": "1.15.10",
     "@tanstack/react-table": "8.10.7",
     "axios": "1.13.3",
+    "bwip-js": "4.8.0",
     "class-variance-authority": "0.7.0",
     "clsx": "2.0.0",
     "file-saver": "2.0.5",

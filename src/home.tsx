@@ -22,9 +22,9 @@ import {
   IPrintRecordElementListType,
   useUndoRedoStore,
   IUndoRedoStoreType,
-  IOperation,
   useMultiSelectStore,
   IMultiSelectStoreType,
+  IBaseElementType,
 } from './store';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { DndProvider } from 'react-dnd';
@@ -122,7 +122,7 @@ export const Home = () => {
     const handleKeyDown = (event: KeyboardEvent) => {
       // Delete 键删除选中元素
       if (event.key === 'Delete' || event.key === 'Backspace') {
-        if (selectElementInfo) {
+        if (selectElementInfo && selectElementInfo.uuid) {
           const { uuid, sourceType } = selectElementInfo;
           if (sourceType === 'Base') {
             deletePrintElement(uuid);
@@ -161,14 +161,22 @@ export const Home = () => {
         event.preventDefault();
         if (clipboard) {
           // 创建复制元素的副本，生成新的 uuid
+          // 确保 top 和 left 是数字类型
+          const top = typeof clipboard.styles.top === 'string' 
+            ? parseInt(clipboard.styles.top) 
+            : (clipboard.styles.top || 0);
+          const left = typeof clipboard.styles.left === 'string' 
+            ? parseInt(clipboard.styles.left) 
+            : (clipboard.styles.left || 0);
+          
           const copiedElement = {
             ...clipboard,
             uuid: `copy-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             styles: {
               ...clipboard.styles,
               // 稍微偏移位置，避免重叠
-              top: clipboard.styles.top + 20,
-              left: clipboard.styles.left + 20,
+              top: top + 20,
+              left: left + 20,
             },
           };
 

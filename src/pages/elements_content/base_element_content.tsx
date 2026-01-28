@@ -4,6 +4,7 @@ import {
   ImageElement,
   TableElement,
   PdfElement,
+  UdiElement,
 } from '../../components/base_element';
 import {
   useDragElementStore,
@@ -45,6 +46,14 @@ export const BaseElementsContent = () => {
             return <TableElement key={index} />;
           case IElementType.Pdf:
             return <PdfElement key={index} />;
+          case IElementType.Udi:
+            return (
+              <UdiElement
+                key={index}
+                content={item.content}
+                sourceType={sourceElementTypes.Base}
+              />
+            );
         }
       })}
     </div>

@@ -5,6 +5,7 @@ export enum IElementType {
   Image = 'Image',
   Table = 'Table',
   Pdf = 'Pdf',
+  Udi = 'Udi',
 }
 
 interface IHeader {
@@ -104,12 +105,30 @@ export const deletePdfElement: IBaseElementType = {
   rotate: 0,
 };
 
+export const defaultUdiElement: IBaseElementType = {
+  type: IElementType.Udi,
+  styles: {
+    left: 0,
+    top: 0,
+    width: 200,
+    height: 200,
+    color: '#000000',
+  },
+  content: '(01)12345678901234(17)231231(10)ABC123',
+  rotate: 0,
+  isEdit: false,
+};
+
 // 默认元素列表
 export const defalutBaseElements: IBaseElementType[] = [
   defaultTextElement,
   defaultImageElement,
   defaultTableElement,
   deletePdfElement,
+  {
+    ...defaultUdiElement,
+    content: 'UDI 条形码',
+  },
 ];
 
 export type MyDropResult = {

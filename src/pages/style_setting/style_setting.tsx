@@ -5,6 +5,7 @@ import {
   imageElementInputList,
   tableElementInputList,
   pdfElementInputList,
+  udiElementInputList,
   IElementType,
   sourceElementTypes,
   usePrintRecordElementListStore,
@@ -17,9 +18,11 @@ import {
 } from '@/store';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { generateGS1DataMatrix, validateUDI, saveBarcodeToFile } from '@/lib/udiUtils';
 import {
   Select,
   SelectContent,
@@ -33,6 +36,9 @@ import { useTranslation } from 'react-i18next';
 
 export const StyleSetting: React.FC<React.PropsWithChildren> = () => {
   const { t } = useTranslation();
+  
+  // UDI下载开关状态
+  const [udiDownloadEnabled, setUdiDownloadEnabled] = useState(false);
 
   const { selectElementInfo, changeSelectElementInfo } =
     useSelectElementInfoStore((state: ISelectElementInfoType) => state);
@@ -57,6 +63,8 @@ export const StyleSetting: React.FC<React.PropsWithChildren> = () => {
         return tableElementInputList;
       case IElementType.Pdf:
         return pdfElementInputList;
+      case IElementType.Udi:
+        return udiElementInputList;
       default:
         return [];
     }
@@ -255,8 +263,82 @@ export const StyleSetting: React.FC<React.PropsWithChildren> = () => {
           {selectElementInfo.type === IElementType.Pdf && (
             <PdfElementSetting selectElementInfo={selectElementInfo} />
           )}
+          
+          {/* UDI元素专用的生成按钮和下载开关 */}
+          {selectElementInfo.type === IElementType.Udi && (
+            <>
+              {/* 下载开关 */}
+              <div className="mt-4 flex items-center justify-between rounded-lg border p-3">
+                <div className="flex flex-col">
+                  <Label className="text-sm font-medium">Download Image</Label>
+                  <span className="text-xs text-gray-500">
+                    {udiDownloadEnabled ? 'Auto download enabled' : 'Display only'}
+                  </span>
+                </div>
+                <Switch
+                  checked={udiDownloadEnabled}
+                  onCheckedChange={setUdiDownloadEnabled}
+                />
+              </div>
+              
+              {/* 生成按钮 */}
+              <Button
+                className="mt-4 w-[100%]"
+                variant="default"
+                onClick={() => {
+                  const udiContent = selectElementInfo.content;
+                  if (udiContent && validateUDI(udiContent)) {
+                    try {
+                      // 生成新的条形码
+                      const width = selectElementInfo.styles.width || 200;
+                      const height = selectElementInfo.styles.height || 200;
+                      const color = selectElementInfo.styles.color || '#000000';
+                      
+                      const numericWidth = typeof width === 'string' ? parseInt(width) : width;
+                      const numericHeight = typeof height === 'string' ? parseInt(height) : height;
+                      
+                      const svg = generateGS1DataMatrix(udiContent, {
+                        width: numericWidth,
+                        height: numericHeight,
+                        scale: 2,
+                        color: color,
+                      });
+                      
+                      // 根据开关状态决定是否下载
+                      if (udiDownloadEnabled) {
+                        const saveResult = saveBarcodeToFile(svg);
+                        console.log('Barcode generated and saved:', saveResult);
+                      } else {
+                        console.log('Barcode generated (display only)');
+                      }
+                      
+                      // 强制更新元素状态，确保UI刷新
+                      if (selectElementInfo?.sourceType === sourceElementTypes.Table) {
+                        updatePrintRecordElement(selectElementInfo);
+                      } else {
+                        updatePrintElement(selectElementInfo);
+                      }
+                      
+                      alert(udiDownloadEnabled 
+                        ? 'Barcode generated and downloaded!' 
+                        : 'Barcode generated successfully!'
+                      );
+                    } catch (error) {
+                      console.error('Error generating barcode:', error);
+                      alert('Error generating barcode: ' + (error as Error).message);
+                    }
+                  } else {
+                    alert('Invalid UDI format. Please check your UDI content.');
+                  }
+                }}
+              >
+                Generate Barcode
+              </Button>
+            </>
+          )}
+          
           <Button
-            className="bottom-0 mt-20 w-[100%]"
+            className="bottom-0 mt-4 w-[100%]"
             variant="outline"
             onClick={() => deleteElement(selectElementInfo.uuid)}
           >
